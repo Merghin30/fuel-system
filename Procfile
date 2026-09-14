@@ -1,1 +1,1 @@
-   web: gunicorn fuel_system.wsgi --log-file -
+web: uvicorn main:app --host 0.0.0.0 --port $PORT
