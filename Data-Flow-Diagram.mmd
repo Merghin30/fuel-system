@@ -1,0 +1,32 @@
+sequenceDiagram
+    autonumber
+    actor Driver as Corporate Fleet Driver (MOKA App)
+    participant MokaApp as MOKA Client App (User Device)
+    participant MokaServer as MOKA Sovereign Server (Riyadh VPC)
+    participant Urway as Urway / HyperPay (PCI-DSS Gateway)
+    participant Bank as Acquiring Partner Bank (Saudi Arabia)
+    participant SADAD as SADAD Payment Network / SAMA
+
+    Note over Driver, SADAD: Tokenized Cardholder Data Flow (MOKA Out-of-Scope)
+
+    Driver->>MokaApp: 1. Selects "Refuel & Pay" at station (Input Amount/Liters)
+    MokaApp->>MokaServer: 2. Request Fleet Rules & Authorization (Odometer, Vehicle ID, Project Code)
+    MokaServer-->>MokaApp: 3. Fleet Policy Approved (Limits OK, Active Status)
+
+    Note over MokaApp, Urway: Payment Processing Stage (Raw Card Data is Sent Directly to Gateway)
+    MokaApp->>Urway: 4. Secure Direct Post (Raw Card Number, Expiry, CVV) via SDK/Iframe
+    Note over MokaApp, MokaServer: CRITICAL: Raw Card Data completely bypasses MOKA Servers!
+    Urway->>Urway: 5. Validates card and stores details in secure vault
+    Urway-->>MokaApp: 6. Returns Secure Payment Token (Non-sensitive guid e.g. tok_938fd2)
+
+    Note over MokaApp, MokaServer: MOKA Server receives Tokenized transaction trigger
+    MokaApp->>MokaServer: 7. Initiates transaction dispatch with [Fuel Liter, Vehicle ID, tok_938fd2]
+    MokaServer->>Urway: 8. Server-to-Server request to capture: [Token, Amount] (TLS 1.3, AES-256 Auth)
+    Urway->>Bank: 9. Route credit authorization request (ISO 8583 standard)
+    Bank->>SADAD: 10. Check account limits / Process biller settlement
+    SADAD-->>Bank: 11. Transaction cleared & funds moved
+    Bank-->>Urway: 12. Transaction Approved
+    Urway-->>MokaServer: 13. Signed capture webhook/response: "APPROVED" with Transaction ID
+    MokaServer->>MokaServer: 14. Record transaction log, sign audit trail, trigger EXPRO reporting
+    MokaServer-->>MokaApp: 15. Transaction Completed (Show Receipt & Release Dispenser)
+    MokaApp-->>Driver: 16. Fuel dispenser unlocked & refueled successfully!

@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # 1. MOKA Fullstack Enterprise Application
+  moka-app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: moka_app_service
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://moka_admin:moka_secure_pass@postgres-db:5432/moka_enterprise_db?schema=public
+      - REDIS_URL=redis://redis-cache:6379/0
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - postgres-db
+      - redis-cache
+    networks:
+      - moka-network
+
+  # 2. Production PostgreSQL Database (Scalable up to 100,000+ devices)
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: moka_postgres_db
+    restart: always
+    environment:
+      - POSTGRES_USER=moka_admin
+      - POSTGRES_PASSWORD=moka_secure_pass
+      - POSTGRES_DB=moka_enterprise_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - moka-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+
+  # 3. Redis Cache (For high-speed lock state tracking & sync queue)
+  redis-cache:
+    image: redis:7-alpine
+    container_name: moka_redis_cache
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - moka-network
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  moka-network:
+    driver: bridge

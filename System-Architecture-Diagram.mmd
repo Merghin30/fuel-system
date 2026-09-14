@@ -1,0 +1,66 @@
+graph TD
+    %% System Architecture Diagram for MOKA B2B Fleet Fuel Management
+
+    subgraph ClientZone [Client / User Zone]
+        DriverApp[MOKA Driver App <br>Mobile - TLS 1.3]
+        CorpPortal[Corporate Fleet Portal <br>Web - TLS 1.3]
+    end
+
+    subgraph DMZ [Public Network DMZ]
+        WAF[Cloudflare Web Application Firewall]
+        LB[Application Load Balancer <br>SSL/TLS Termination]
+    end
+
+    subgraph VPC_Riyadh [Sovereign VPC - Riyadh Region]
+        subgraph WebLayer [Web Application Layer]
+            ViteDevServer[Express / Vite App Servers <br>Node.js Serverless Containers]
+        end
+
+        subgraph CoreServices [Core B2B Fleet Services]
+            AuthService[IAM & Directory Service]
+            FleetManager[Fleet & Fuel Rules Engine]
+            AuditLogger[Sovereign Audit Logger]
+            FraudMonitor[SIEM & Fraud Detection Engine]
+        end
+
+        subgraph StorageLayer [Secure Data Store]
+            MokaDB[(Sovereign Database <br>AES-256 Encrypted at Rest)]
+        end
+    end
+
+    subgraph SecureGateway [Compliant Tokenization & Payment Gateway]
+        UrwayGateway[Urway / HyperPay Payment Gateway <br>PCI-DSS Level 1 Provider]
+    end
+
+    subgraph FinancialInfrastructure [Saudi Sovereign Financial Infrastructure]
+        SAMA[SAMA Sandbox & Clearing Rails]
+        SADAD[SADAD Payment Network]
+        AcquiringBank[Acquiring Partner Bank]
+    end
+
+    %% Data Connections
+    DriverApp -->|Route API & Auth| WAF
+    CorpPortal -->|B2B Admin Console| WAF
+    WAF -->|Traffic Filtered| LB
+    LB -->|Secure Proxy| ViteDevServer
+
+    %% Server Internal Handshakes
+    ViteDevServer --> AuthService
+    ViteDevServer --> FleetManager
+    ViteDevServer --> AuditLogger
+    ViteDevServer --> FraudMonitor
+    
+    AuthService --> MokaDB
+    FleetManager --> MokaDB
+    AuditLogger --> MokaDB
+
+    %% Payment Interconnections (MOKA Server bypasses Raw Card Details)
+    DriverApp -->|PCI-DSS Compliant Inline Form / Iframe| UrwayGateway
+    UrwayGateway -->|Provides Secure Payment Token| DriverApp
+    DriverApp -->|MOKA submits Transaction Token| ViteDevServer
+    ViteDevServer -->|Verifies Token & Captures| UrwayGateway
+
+    %% Settlement Flows
+    UrwayGateway -->|Clears Transaction| AcquiringBank
+    AcquiringBank -->|SADAD Invoicing Interface| SADAD
+    SADAD -->|Regulatory Ledger Ledger Sync| SAMA

@@ -1,0 +1,6 @@
+{
+  "name": "MOKA",
+  "description": "Enterprise Fleet Logistics & Offline Platform with D3 Facility RF & Handshake Failure Visualizer, B2B Fuel Merchant & Partner Growth Portal, Dynamic Fuel Pricing, Live Tank Telemetry, Automated SARIE Settlement, CAN-Bus AI Fraud Shield, Bidirectional ERP Sync, and ZATCA Phase 2 Compliance.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
