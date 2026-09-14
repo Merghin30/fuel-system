@@ -1,1 +1,1 @@
-   web: bun run dev
+   web: gunicorn fuel_system.wsgi --log-file -
