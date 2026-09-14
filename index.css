@@ -1,0 +1,361 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Tajawal:wght@700;800;900&display=swap');
+@import "tailwindcss";
+
+:root {
+  --moka-primary: #ea580c;
+  --moka-secondary: #475569;
+  --moka-success: #10b981;
+  --moka-warning: #f59e0b;
+  --moka-danger: #ef4444;
+  --moka-info: #3b82f6;
+  --moka-bg-surface: #ffffff;
+  --moka-bg-elevated: #f8fafc;
+  --moka-bg-overlay: rgba(255, 255, 255, 0.85);
+  --moka-text-primary: #0f172a;
+  --moka-text-secondary: #475569;
+  --moka-text-disabled: #94a3b8;
+  --moka-text-inverse: #ffffff;
+  --moka-border-default: #e2e8f0;
+  --moka-border-focused: #ea580c;
+  --moka-border-error: #ef4444;
+}
+
+.dark {
+  --moka-primary: #f97316;
+  --moka-secondary: #94a3b8;
+  --moka-success: #10b981;
+  --moka-warning: #f59e0b;
+  --moka-danger: #ef4444;
+  --moka-info: #3b82f6;
+  --moka-bg-surface: #0f172a;
+  --moka-bg-elevated: #1e293b;
+  --moka-bg-overlay: rgba(15, 23, 42, 0.85);
+  --moka-text-primary: #f8fafc;
+  --moka-text-secondary: #cbd5e1;
+  --moka-text-disabled: #64748b;
+  --moka-text-inverse: #0f172a;
+  --moka-border-default: #334155;
+  --moka-border-focused: #f97316;
+  --moka-border-error: #f87171;
+}
+
+.oled-black {
+  --moka-primary: #f97316;
+  --moka-secondary: #a1a1aa;
+  --moka-success: #10b981;
+  --moka-warning: #f59e0b;
+  --moka-danger: #ef4444;
+  --moka-info: #3b82f6;
+  --moka-bg-surface: #000000;
+  --moka-bg-elevated: #09090b;
+  --moka-bg-overlay: rgba(0, 0, 0, 0.9);
+  --moka-text-primary: #ffffff;
+  --moka-text-secondary: #d4d4d8;
+  --moka-text-disabled: #52525b;
+  --moka-text-inverse: #000000;
+  --moka-border-default: #27272a;
+  --moka-border-focused: #f97316;
+  --moka-border-error: #ef4444;
+}
+
+.high-contrast {
+  --moka-primary: #ea580c;
+  --moka-secondary: #ffffff;
+  --moka-success: #00ff00;
+  --moka-warning: #ffff00;
+  --moka-danger: #ff0000;
+  --moka-info: #00ffff;
+  --moka-bg-surface: #000000;
+  --moka-bg-elevated: #000000;
+  --moka-bg-overlay: rgba(0, 0, 0, 0.95);
+  --moka-text-primary: #ffffff;
+  --moka-text-secondary: #ffff00;
+  --moka-text-disabled: #888888;
+  --moka-text-inverse: #000000;
+  --moka-border-default: #ffffff;
+  --moka-border-focused: #ffff00;
+  --moka-border-error: #ff0000;
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-tajawal: "Tajawal", sans-serif;
+  --font-cairo: "Cairo", sans-serif;
+  
+  /* Semantic Color Tokens mapping to dynamic CSS Variables */
+  --color-primary: var(--moka-primary);
+  --color-secondary: var(--moka-secondary);
+  --color-success: var(--moka-success);
+  --color-warning: var(--moka-warning);
+  --color-danger: var(--moka-danger);
+  --color-info: var(--moka-info);
+  
+  --color-surface: var(--moka-bg-surface);
+  --color-elevated: var(--moka-bg-elevated);
+  --color-overlay: var(--moka-bg-overlay);
+  
+  --color-text-primary: var(--moka-text-primary);
+  --color-text-secondary: var(--moka-text-secondary);
+  --color-text-disabled: var(--moka-text-disabled);
+  --color-text-inverse: var(--moka-text-inverse);
+  
+  --color-border-default: var(--moka-border-default);
+  --color-border-focused: var(--moka-border-focused);
+  --color-border-error: var(--moka-border-error);
+
+  /* Smooth theme overrides for the orange accent */
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdbb74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
+  --color-orange-950: #431407;
+}
+
+/* Smooth theme transition for color adjustments */
+.theme-transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* RTL mirroring layout */
+.rtl-mode .mirror-rtl {
+  transform: scaleX(-1);
+}
+
+/* Base scrollbar and selection polishes */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(249, 115, 22, 0.2) transparent;
+  outline-color: var(--color-orange-500);
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(249, 115, 22, 0.25);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(249, 115, 22, 0.45);
+}
+
+::selection {
+  background-color: rgba(249, 115, 22, 0.15);
+  color: var(--color-orange-900);
+}
+
+/* Custom keyframes for custom animations if needed */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media print {
+  @page {
+    margin-top: 1.6cm;
+    margin-bottom: 1.4cm;
+    margin-left: 1cm;
+    margin-right: 1cm;
+  }
+
+  /* Hide unnecessary UI elements */
+  header,
+  nav,
+  .no-print,
+  .pda-simulator-container,
+  #csv-export-toast-feedback,
+  button,
+  .lg\:hidden,
+  #kpi-performance-row,
+  #network-status-monitor,
+  .sticky {
+    display: none !important;
+  }
+
+  /* Formal Header and Footer positioning on every printed page */
+  .print-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 40px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-bottom: 1.5px solid #000000 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-family: var(--font-mono) !important;
+    font-size: 8.5pt !important;
+    padding-bottom: 6px !important;
+    z-index: 9999 !important;
+  }
+
+  .print-footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 35px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-top: 1.5px solid #000000 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-family: var(--font-mono) !important;
+    font-size: 7.5pt !important;
+    padding-top: 6px !important;
+    z-index: 9999 !important;
+  }
+
+  /* Reset layout constraints for pristine print document */
+  body, html {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding-top: 50px !important;
+    padding-bottom: 45px !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Force main workspace to stretch to full print width */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure grid columns expand to full width in print */
+  .grid, .xl\:grid-cols-12, .lg\:grid-cols-3 {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* Force elements that were multi-column wide to span full width */
+  .lg\:col-span-2, .xl\:col-span-8 {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+
+  /* Remove shadows and excessive border radii for physical sheets */
+  .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
+    box-shadow: none !important;
+  }
+
+  .rounded-xl, .rounded-2xl {
+    border-radius: 0px !important;
+  }
+
+  .border, .border-slate-100, .border-slate-200 {
+    border-color: #cccccc !important;
+  }
+
+  /* Force elegant high-contrast dark text printing */
+  .text-slate-800, .text-slate-700, .text-slate-600 {
+    color: #000000 !important;
+  }
+
+  /* Prevent row orphans across print pages */
+  tr, .divide-y > div {
+    page-break-inside: avoid !important;
+  }
+}
+
+/* High-contrast black and white patterns for charts (both on-screen preview and hardcopy print) */
+.pattern-striped {
+  background-image: repeating-linear-gradient(45deg, #1e293b, #1e293b 4px, #ffffff 4px, #ffffff 8px) !important;
+  border: 1.5px solid #000000 !important;
+}
+.pattern-dots {
+  background-image: radial-gradient(#000000 25%, transparent 25%) !important;
+  background-size: 6px 6px !important;
+  background-color: #ffffff !important;
+  border: 1.5px solid #000000 !important;
+}
+.pattern-checker {
+  background-image: repeating-linear-gradient(135deg, #475569, #475569 4px, #ffffff 4px, #ffffff 8px) !important;
+  border: 1.5px solid #000000 !important;
+}
+.pattern-solid-black {
+  background-color: #090d16 !important;
+  border: 1.5px solid #000000 !important;
+}
+.pattern-solid-gray {
+  background-color: #94a3b8 !important;
+  border: 1.5px solid #000000 !important;
+}
+.pattern-hollow {
+  background-color: #ffffff !important;
+  border: 1.5px dashed #000000 !important;
+}
+
+/* MOKA NFC Scanner Proximity Pulse & Haptic Alert Animations */
+@keyframes nfc-proximity-ripple {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.95;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+    box-shadow: 0 0 25px 20px rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes nfc-haptic-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(52, 211, 153, 0.95));
+  }
+}
+
+.animate-nfc-ripple {
+  animation: nfc-proximity-ripple 1.4s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.animate-nfc-ripple-delayed {
+  animation: nfc-proximity-ripple 1.4s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  animation-delay: 0.45s;
+}
+
+.animate-nfc-haptic-glow {
+  animation: nfc-haptic-glow 1.2s ease-in-out infinite;
+}
+
+
