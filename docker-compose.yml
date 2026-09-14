@@ -4,7 +4,7 @@ services:
   # 1. MOKA Fullstack Enterprise Application
   moka-app:
     build:
-      context: .
+      context: ..
       dockerfile: docker/Dockerfile
     container_name: moka_app_service
     restart: always
