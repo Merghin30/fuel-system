@@ -1,0 +1,574 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  COMPANY_ADMIN
+  FLEET_MANAGER
+  DISPATCHER
+}
+
+enum PeriodType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  ANNUALLY
+}
+
+enum OwnerType {
+  VEHICLE
+  DRIVER
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REJECTED
+}
+
+enum SyncDirection {
+  UPLOAD
+  DOWNLOAD
+}
+
+enum DeviceStatus {
+  ACTIVE
+  LOCKED
+  INACTIVE
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         UserRole  @default(FLEET_MANAGER)
+  companyId    String?   @db.Uuid
+  company      Establishment?  @relation(fields: [companyId], references: [id])
+  isActive     Boolean   @default(true)
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  createdBy    String    @default("SYSTEM")
+  updatedBy    String    @default("SYSTEM")
+  isDeleted    Boolean   @default(false)
+
+  @@index([email])
+  @@index([companyId])
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  permissions String[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String   @default("SYSTEM")
+  updatedBy   String   @default("SYSTEM")
+  isDeleted   Boolean  @default(false)
+}
+
+model Establishment {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  taxId     String   @unique
+  address   String
+  phone     String
+  email     String
+  status    String   @default("ACTIVE") // ACTIVE, INACTIVE
+  
+  users     User[]
+  branches  Branch[]
+  drivers   Driver[]
+  vehicles  Vehicle[]
+  budgets   Budget[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String   @default("SYSTEM")
+  updatedBy String   @default("SYSTEM")
+  isDeleted Boolean  @default(false)
+
+  @@index([taxId])
+}
+
+model Branch {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @db.Uuid
+  company   Establishment  @relation(fields: [companyId], references: [id])
+  name      String
+  code      String   @unique
+  address   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String   @default("SYSTEM")
+  updatedBy String   @default("SYSTEM")
+  isDeleted Boolean  @default(false)
+
+  @@index([companyId])
+  @@index([code])
+}
+
+model Driver {
+  id            String    @id @default(uuid()) @db.Uuid
+  companyId     String    @db.Uuid
+  company       Establishment   @relation(fields: [companyId], references: [id])
+  name          String
+  employeeId    String    @unique
+  licenseNumber String    @unique
+  phone         String
+  nfcCardId     String?   @db.Uuid
+  isActive      Boolean   @default(true)
+  status        String    @default("AVAILABLE") // AVAILABLE, ON_TRIP, SUSPENDED
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  createdBy     String    @default("SYSTEM")
+  updatedBy     String    @default("SYSTEM")
+  isDeleted     Boolean   @default(false)
+
+  @@index([companyId])
+  @@index([employeeId])
+}
+
+model Vehicle {
+  id          String   @id @default(uuid()) @db.Uuid
+  companyId   String   @db.Uuid
+  company     Establishment  @relation(fields: [companyId], references: [id])
+  plateNumber String   @unique
+  model       String
+  type        String   // TRUCK, VAN, CAR
+  fuelType    String   // Diesel, Petrol 95, Petrol 91
+  nfcCardId   String?  @db.Uuid
+  walletId    String   @db.Uuid
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String   @default("SYSTEM")
+  updatedBy   String   @default("SYSTEM")
+  isDeleted   Boolean  @default(false)
+
+  @@index([companyId])
+  @@index([plateNumber])
+}
+
+model VehicleNfcCard {
+  id                String   @id @default(uuid()) @db.Uuid
+  cardNumber        String   @unique // RFID / NFC UID
+  vehicleId         String?  @db.Uuid
+  driverId          String?  @db.Uuid
+  isActive          Boolean  @default(true)
+  pinHash           String
+  dailyLitersLimit  Float
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String   @default("SYSTEM")
+  updatedBy         String   @default("SYSTEM")
+  isDeleted         Boolean  @default(false)
+
+  @@index([cardNumber])
+}
+
+model FuelStation {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  location    String   // coordinates / address
+  status      String   @default("ACTIVE")
+  managerName String
+
+  pumps       FuelPump[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String   @default("SYSTEM")
+  updatedBy   String   @default("SYSTEM")
+  isDeleted   Boolean  @default(false)
+}
+
+model FuelPump {
+  id            String      @id @default(uuid()) @db.Uuid
+  stationId     String      @db.Uuid
+  station       FuelStation @relation(fields: [stationId], references: [id])
+  pumpNumber    String
+  fuelProductId String      @db.Uuid
+  fuelProduct   FuelProduct @relation(fields: [fuelProductId], references: [id])
+  status        String      @default("ACTIVE") // ACTIVE, MAINTENANCE
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  createdBy     String      @default("SYSTEM")
+  updatedBy     String      @default("SYSTEM")
+  isDeleted     Boolean     @default(false)
+
+  @@index([stationId])
+}
+
+model FuelProduct {
+  id            String     @id @default(uuid()) @db.Uuid
+  name          String     @unique // Diesel, Petrol 95
+  pricePerLiter Float
+  currency      String     @default("SAR")
+
+  pumps         FuelPump[]
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  createdBy     String     @default("SYSTEM")
+  updatedBy     String     @default("SYSTEM")
+  isDeleted     Boolean    @default(false)
+}
+
+model Budget {
+  id        String     @id @default(uuid()) @db.Uuid
+  companyId String     @db.Uuid
+  company   Establishment    @relation(fields: [companyId], references: [id])
+  limit     Float
+  spent     Float      @default(0)
+  period    PeriodType @default(MONTHLY)
+  startDate DateTime
+  endDate   DateTime
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  createdBy String     @default("SYSTEM")
+  updatedBy String     @default("SYSTEM")
+  isDeleted Boolean    @default(false)
+
+  @@index([companyId])
+}
+
+model Wallet {
+  id         String    @id @default(uuid()) @db.Uuid
+  ownerId    String    @db.Uuid
+  ownerType  OwnerType @default(VEHICLE)
+  balance    Float
+  dailyLimit Float
+  spentToday Float     @default(0)
+  budgetId   String?   @db.Uuid
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  createdBy  String    @default("SYSTEM")
+  updatedBy  String    @default("SYSTEM")
+  isDeleted  Boolean   @default(false)
+
+  @@index([ownerId])
+}
+
+model Transaction {
+  id              String            @id @default(uuid()) @db.Uuid
+  uuid            String            @unique // offline UUID
+  companyId       String            @db.Uuid
+  driverId        String            @db.Uuid
+  vehicleId       String            @db.Uuid
+  stationId       String            @db.Uuid
+  pumpId          String            @db.Uuid
+  fuelProductId   String            @db.Uuid
+  liters          Float
+  pricePerLiter   Float
+  amount          Float
+  transactionDate DateTime
+  isOffline       Boolean           @default(false)
+  syncId          String?           @db.Uuid
+  status          TransactionStatus @default(COMPLETED)
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  createdBy       String            @default("SYSTEM")
+  updatedBy       String            @default("SYSTEM")
+  isDeleted       Boolean           @default(false)
+
+  @@index([uuid])
+  @@index([driverId])
+  @@index([vehicleId])
+  @@index([transactionDate])
+}
+
+model OfflineTransaction {
+  id         String   @id @default(uuid()) @db.Uuid
+  tempUuid   String   @unique
+  deviceId   String   @db.Uuid
+  payload    Json
+  status     String   @default("PENDING") // PENDING, SYNCED, FAILED
+  retryCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  syncedAt   DateTime?
+}
+
+model SyncQueue {
+  id          String   @id @default(uuid()) @db.Uuid
+  deviceId    String   @db.Uuid
+  payloadType String   // TRANSACTION, HEARTBEAT
+  payload     String   @db.Text
+  status      String   @default("PENDING")
+
+  createdAt   DateTime @default(now())
+}
+
+model SyncLog {
+  id               String        @id @default(uuid()) @db.Uuid
+  deviceId         String        @db.Uuid
+  status           String        @default("SUCCESS")
+  message          String
+  timestamp        DateTime      @default(now())
+  direction        SyncDirection
+  bytesTransferred Int
+
+  @@index([deviceId])
+}
+
+model Device {
+  id         String       @id @default(uuid()) @db.Uuid
+  deviceUuid String       @unique
+  name       String
+  model      String
+  osVersion  String
+  lastSyncAt DateTime     @default(now())
+  isLocked   Boolean      @default(false)
+  unlockCode String
+  status     DeviceStatus @default(ACTIVE)
+
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  createdBy  String       @default("SYSTEM")
+  updatedBy  String       @default("SYSTEM")
+  isDeleted  Boolean      @default(false)
+
+  @@index([deviceUuid])
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  deviceId  String   @db.Uuid
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String
+  userName  String
+  action    String
+  details   String
+  ipAddress String
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String
+  message   String
+  type      String   @default("INFO") // INFO, WARNING, CRITICAL
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model ErpMapping {
+  id            String   @id @default(uuid()) @db.Uuid
+  localEntity   String   // COMPANY, DRIVER, VEHICLE, TRANSACTION
+  erpEntity     String   // VendorAccount, EmployeeMaster, FixedAsset, JournalEntry
+  localId       String   @db.Uuid
+  erpId         String
+  status        String   @default("SYNCED")
+  lastAttemptAt DateTime @default(now())
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String   @default("SYSTEM")
+  updatedBy     String   @default("SYSTEM")
+  isDeleted     Boolean  @default(false)
+
+  @@index([localId])
+}
+
+model Settings {
+  id                     String   @id @default("global-settings")
+  offlineSyncLimitHours  Int      @default(168)
+  allowEmergencyFueling  Boolean  @default(true)
+  enforceNfcPin          Boolean  @default(true)
+  erpEndpointUrl         String
+  companyName            String
+  syncHeartbeatThreshold Int      @default(3)
+}
+
+model GeofenceBreach {
+  id                String   @id @default(uuid()) @db.Uuid
+  vehicleId         String?  @db.Uuid
+  vehiclePlate      String
+  driverId          String?  @db.Uuid
+  driverName        String
+  zoneName          String
+  latitude          Float
+  longitude         Float
+  deviationDistance Float
+  severity          String   // WARNING, CRITICAL
+  status            String   // ACTIVE, ACKNOWLEDGED, RESOLVED
+  timestamp         DateTime @default(now())
+}
+
+model NfcScanLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  cardNumber   String
+  vehicleId    String?  @db.Uuid
+  vehiclePlate String?
+  driverId     String?  @db.Uuid
+  driverName   String?
+  status       String   // SUCCESS, FAILED
+  errorMessage String?
+  latitude     Float
+  longitude    Float
+  locationName String
+  timestamp    DateTime @default(now())
+  verified     Boolean  @default(false)
+}
+
+model Enterprise {
+  id              String           @id @default(uuid()) @db.Uuid
+  name            String
+  taxId           String?          @unique
+  email           String?          @unique
+  status          String           @default("ACTIVE")
+  virtualAccounts VirtualAccount[]
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  createdBy       String           @default("SYSTEM")
+  updatedBy       String           @default("SYSTEM")
+  isDeleted       Boolean          @default(false)
+
+  @@index([taxId])
+}
+
+model VirtualAccount {
+  accountId       String                      @id @default(uuid()) @db.Uuid
+  enterpriseId    String                      @db.Uuid
+  enterprise      Enterprise                  @relation(fields: [enterpriseId], references: [id])
+  virtualIban     String                      @unique
+  bankName        String
+  accountStatus   String                      @default("Active") // Active, Inactive
+  balance         Float                       @default(0.0)
+  transactions    VirtualAccountTransaction[]
+
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+}
+
+model VirtualAccountTransaction {
+  transactionId   String         @id @default(uuid()) @db.Uuid
+  virtualIban     String
+  virtualAccount  VirtualAccount @relation(fields: [virtualIban], references: [virtualIban])
+  amount          Float
+  currency        String
+  senderName      String
+  timestamp       DateTime       @default(now())
+
+  @@index([virtualIban])
+}
+
+model Subscription {
+  id                     String    @id @default(uuid()) @db.Uuid
+  orgId                  String    @unique
+  stripeCustomerId       String?
+  stripeSubscriptionId   String?
+  tier                   String    @default("FREEMIUM") // FREEMIUM, PAY_AS_YOU_GO, ENTERPRISE, GOVERNMENT
+  status                 String    @default("active") // active, past_due, suspended, canceled
+  vehiclesLimit          Int       @default(2)
+  pricePerVehicle        Float     @default(0.0)
+  pricePerLiter          Float     @default(0.0)
+  billingCountry         String    @default("KSA") // KSA, Sudan, Other
+  currentPeriodStart     DateTime  @default(now())
+  currentPeriodEnd       DateTime  @default(now())
+  failedPaymentAttempts  Int       @default(0)
+  gracePeriodEndsAt      DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  invoices               Invoice[]
+
+  @@index([orgId])
+}
+
+model Invoice {
+  id               String       @id @default(uuid()) @db.Uuid
+  invoiceNumber    String       @unique // e.g. INV-2026-001
+  subscriptionId   String       @db.Uuid
+  subscription     Subscription @relation(fields: [subscriptionId], references: [id])
+  amount           Float
+  tax              Float
+  subtotal         Float
+  currency         String       @default("USD")
+  status           String       @default("paid") // paid, unpaid, failed
+  paymentMethod    String       @default("stripe") // stripe, sadad, manual
+  vehiclesBilled   Int?
+  litersBilled     Int?
+  issuedAt         DateTime     @default(now())
+  pdfUrl           String?
+
+  @@index([subscriptionId])
+}
+
+model WashStation {
+  id          String        @id @default(uuid()) @db.Uuid
+  name        String
+  location    String
+  latitude    Float
+  longitude   Float
+  status      String        @default("ACTIVE") // ACTIVE, INACTIVE
+  bookings    WashBooking[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model WashService {
+  id          String        @id @default(uuid()) @db.Uuid
+  name        String
+  price       Float
+  durationMin Int
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model WashBooking {
+  id          String        @id @default(uuid()) @db.Uuid
+  vehicleId   String        @db.Uuid
+  companyId   String        @db.Uuid
+  stationId   String        @db.Uuid
+  station     WashStation   @relation(fields: [stationId], references: [id])
+  washType    String        // Exterior, Interior + Exterior, Full Detailing, Express
+  price       Float
+  dateSlot    String        // YYYY-MM-DD
+  timeSlot    String        // HH:MM
+  status      String        @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  qrCode      String        // QR string representation
+  beforePhoto String?       // Before photo URL/Base64
+  afterPhoto  String?       // After photo URL/Base64
+  offline     Boolean       @default(false)
+  loyaltyPts  Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model WashLoyalty {
+  id          String        @id @default(uuid()) @db.Uuid
+  companyId   String        @db.Uuid
+  points      Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+
+
